@@ -19,6 +19,10 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
+    // Inyectamos esto temporalmente para poder listar los usuarios fácilmente
+    @Autowired
+    private com.example.TINGESO.Repositories.UserRepository userRepository;
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         UserEntity user = authService.login(loginRequest.getEmail(), loginRequest.getPassword());
@@ -33,5 +37,23 @@ public class AuthController {
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales incorrectas");
         }
+    }
+
+    // ⭐ ENDPOINT PARA REGISTRAR NUEVO CLIENTE ⭐
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody com.example.TINGESO.DTOs.RegisterRequest registerRequest) {
+        try {
+            UserEntity newUser = authService.registerClient(registerRequest);
+            return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
+        } catch (RuntimeException e) {
+            // Devuelve error 400 Bad Request si el correo o rut ya existe
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    // ⭐ ENDPOINT TEMPORAL PARA VERIFICAR LA BASE DE DATOS ⭐
+    @GetMapping("/users")
+    public ResponseEntity<?> getAllUsers() {
+        return ResponseEntity.ok(userRepository.findAll());
     }
 }
