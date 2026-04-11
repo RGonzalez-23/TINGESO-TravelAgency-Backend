@@ -21,6 +21,16 @@ public class TourPackageController {
         return ResponseEntity.ok(tourPackageService.getAllPackages());
     }
 
+    // ⭐ ENDPOINT ÉPICA 3: Búsqueda y filtrado para clientes refactorizado
+    @GetMapping("/search")
+    public ResponseEntity<?> searchPackages(@ModelAttribute com.example.TINGESO.DTOs.TourPackageFilterDTO filterDTO) {
+        try {
+            return ResponseEntity.ok(tourPackageService.searchPackages(filterDTO));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error en la búsqueda: " + e.getMessage());
+        }
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable Long id) {
         try {

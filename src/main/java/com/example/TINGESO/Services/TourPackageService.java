@@ -20,6 +20,11 @@ public class TourPackageService {
         return tourPackageRepository.findAll();
     }
 
+    // Nuevo método para Épica 3: Búsqueda dinámica usando un DTO
+    public List<TourPackageEntity> searchPackages(com.example.TINGESO.DTOs.TourPackageFilterDTO filterDTO) {
+        return tourPackageRepository.findAll(filterDTO.toSpecification());
+    }
+
     public TourPackageEntity getPackageById(Long id) {
         return tourPackageRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Paquete no encontrado"));
