@@ -14,11 +14,11 @@ Configurar en `src/main/resources/application.properties`:
 
 ## Modelo de usuarios en Keycloak
 
-- Roles de realm: `CLIENTE`, `ADMIN`.
-- Campos de nombre:
+-- Roles de realm: `CLIENTE`, `ADMIN`.
+-- Campos de nombre:
 	- `firstName` = nombres
 	- `lastName` = `apellidoPaterno apellidoMaterno`
-- Atributos custom: `rut`, `nacionalidad`, `phone`, `apellidoPaterno`, `apellidoMaterno`, `admin`, `accountActive`, `accountLockedTemp`.
+-- Atributos custom: `rut`, `nacionalidad`, `phone`, `apellidoPaterno`, `apellidoMaterno`, `admin`, `accountActive`.
 
 ## Endpoints IAM del backend
 
