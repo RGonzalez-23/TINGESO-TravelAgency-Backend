@@ -39,8 +39,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/packages/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/packages/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/packages/**").hasRole("ADMIN")
-                        .requestMatchers("/api/iam/me/**").authenticated()
-                        .requestMatchers("/api/iam/admin/**").hasRole("ADMIN")
+                        // IAM endpoints removed (managed by Keycloak). Keep general protection.
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
