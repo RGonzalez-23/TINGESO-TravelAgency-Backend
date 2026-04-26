@@ -3,6 +3,7 @@ package com.example.TINGESO.DTOs;
 import com.example.TINGESO.Entities.CategoryEnum;
 import com.example.TINGESO.Entities.PackageStatusEnum;
 import com.example.TINGESO.Entities.TourPackageEntity;
+import com.example.TINGESO.Entities.TripTypeEnum;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
 import lombok.Data;
@@ -26,6 +27,7 @@ public class TourPackageFilterDTO {
     private LocalDate dateTo;
     
     private CategoryEnum category;
+    private TripTypeEnum tripType;
     private Integer minDuration;
     private Integer maxDuration;
 
@@ -58,6 +60,10 @@ public class TourPackageFilterDTO {
             }
             if (category != null) {
                 predicates.add(criteriaBuilder.equal(root.get("category"), category));
+            }
+
+            if (tripType  != null) {
+                predicates.add(criteriaBuilder.equal(root.get("tripType"), tripType));
             }
             if (minDuration != null) {
                 predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("durationDays"), minDuration));
