@@ -2,11 +2,14 @@ package com.example.TINGESO.Services;
 
 import com.example.TINGESO.DTOs.DiscountContextDTO;
 import com.example.TINGESO.DTOs.PassengerDTO;
+import com.example.TINGESO.DTOs.PaymentReceiptDTO;
+import com.example.TINGESO.DTOs.PaymentRequestDTO;
 import com.example.TINGESO.DTOs.ReservationRequestDTO;
 import com.example.TINGESO.DTOs.ReservationResponseDTO;
 import com.example.TINGESO.Entities.*;
 import com.example.TINGESO.Repositories.ReservationRepository;
 import com.example.TINGESO.Repositories.TourPackageRepository;
+import com.example.TINGESO.Repositories.PaymentTransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
@@ -14,8 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class ReservationService {
@@ -25,6 +30,9 @@ public class ReservationService {
 
     @Autowired
     private TourPackageRepository tourPackageRepository;
+
+    @Autowired
+    private PaymentTransactionRepository paymentRepository;
 
     @Autowired
     private DiscountEngineService discountEngineService;
@@ -127,24 +135,60 @@ public class ReservationService {
         }
     }
 
-    // Pagar Reserva
+    // Pay Reservation (Simulated Gateway)
     @Transactional
-    public ReservationResponseDTO payReservation(Long id, String keycloakUserId) {
+    public PaymentReceiptDTO payReservation(Long id, PaymentRequestDTO req, String keycloakUserId) {
         ReservationEntity res = reservationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Reserva no encontrada"));
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
                 
         if (!res.getKeycloakUserId().equals(keycloakUserId)) {
-            throw new RuntimeException("No tienes permiso sobre esta reserva");
+            throw new RuntimeException("Unauthorized: You do not own this reservation");
+        }
+
+        if (res.getStatus() == ReservationStatusEnum.CANCELADA) {
+            throw new RuntimeException("Cannot pay for a CANCELLED reservation");
         }
 
         if (res.getStatus() != ReservationStatusEnum.PENDIENTE) {
-            throw new RuntimeException("La reserva no está en estado PENDIENTE");
+            throw new RuntimeException("Reservation is not PENDING. It might have already been paid.");
         }
         
+        if (res.getFinalAmount() <= 0) {
+            throw new RuntimeException("Payment amount must be greater than 0");
+        }
+
+        // Validate basic mock gateway inputs
+        if (req.getCardNumber() == null || req.getCardNumber().length() != 16) {
+            throw new RuntimeException("Invalid Card Number format (must be 16 digits)");
+        }
+        if (req.getCvv() == null || req.getCvv().length() != 3) {
+            throw new RuntimeException("Invalid CVV format (must be 3 digits)");
+        }
+
+        // Follow Epic 5 constraints: We NEVER persist the sensitive credit card details.
+        // Create the transaction record.
+        PaymentTransactionEntity transaction = new PaymentTransactionEntity();
+        transaction.setTransactionHash(UUID.randomUUID().toString().replace("-", "").toUpperCase());
+        transaction.setAmountPaid(res.getFinalAmount());
+        transaction.setTransactionDate(LocalDateTime.now());
+        transaction.setPaymentMethod(req.getPaymentMethod() != null ? req.getPaymentMethod() : "CREDIT_CARD");
+        transaction.setReservation(res);
+
+        paymentRepository.save(transaction);
+
         res.setStatus(ReservationStatusEnum.PAGADA);
-        res.setPaidAt(LocalDateTime.now());
+        res.setPaidAt(transaction.getTransactionDate());
+        reservationRepository.save(res);
         
-        return mapToResponseDTO(reservationRepository.save(res));
+        // Return a clean voucher representation to the frontend
+        PaymentReceiptDTO receipt = new PaymentReceiptDTO();
+        receipt.setId(transaction.getId());
+        receipt.setTransactionHash(transaction.getTransactionHash());
+        receipt.setAmountPaid(transaction.getAmountPaid());
+        receipt.setTransactionDate(transaction.getTransactionDate());
+        receipt.setPaymentMethod(transaction.getPaymentMethod());
+
+        return receipt;
     }
     
     // Obtener mis Reservas

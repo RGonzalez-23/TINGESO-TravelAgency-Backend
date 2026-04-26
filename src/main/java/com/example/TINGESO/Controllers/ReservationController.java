@@ -1,6 +1,7 @@
 package com.example.TINGESO.Controllers;
 
 import com.example.TINGESO.DTOs.ReservationRequestDTO;
+import com.example.TINGESO.DTOs.PaymentRequestDTO;
 import com.example.TINGESO.Services.ReservationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -44,10 +45,11 @@ public class ReservationController {
     @PostMapping("/{id}/pay")
     public ResponseEntity<?> payReservation(
             @PathVariable Long id,
+            @RequestBody PaymentRequestDTO req,
             @AuthenticationPrincipal Jwt jwt) {
         if (jwt == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         try {
-            return ResponseEntity.ok(reservationService.payReservation(id, getUserIdFromJwt(jwt)));
+            return ResponseEntity.ok(reservationService.payReservation(id, req, getUserIdFromJwt(jwt)));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
