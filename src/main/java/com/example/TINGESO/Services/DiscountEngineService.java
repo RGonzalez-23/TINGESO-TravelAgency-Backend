@@ -49,7 +49,8 @@ public class DiscountEngineService {
 
         // 2. Cliente Frecuente (Reservas pagadas previas)
         int paidReservations = reservationRepository.findByKeycloakUserIdAndStatus(keycloakUserId, ReservationStatusEnum.PAGADA).size();
-        if (paidReservations >= config.getFrequentClientMinReservations()) {
+        int confirmedReservations = reservationRepository.findByKeycloakUserIdAndStatus(keycloakUserId, ReservationStatusEnum.CONFIRMADA).size();
+        if (paidReservations + confirmedReservations >= config.getFrequentClientMinReservations()) {
             applicableDiscounts.add(config.getFrequentClientDiscountPercentage());
             discountReasons.add("Cliente Frecuente (" + config.getFrequentClientDiscountPercentage() + "%)");
         }

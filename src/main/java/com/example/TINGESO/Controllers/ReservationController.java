@@ -61,4 +61,36 @@ public class ReservationController {
         if (jwt == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         return ResponseEntity.ok(reservationService.getMyReservations(getUserIdFromJwt(jwt)));
     }
+
+    // [ADMIN] Obtener TODAS las reservas del sistema
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllReservations(@AuthenticationPrincipal Jwt jwt) {
+        if (jwt == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        return ResponseEntity.ok(reservationService.getAllReservations());
+    }
+
+    // Cambiar estado de la reserva (Cliente confirmando o Admin gestionando)
+    @PutMapping("/{id}/status")
+    public ResponseEntity<?> updateReservationStatus(
+            @PathVariable Long id, 
+            @RequestBody java.util.Map<String, String> payload, 
+            @AuthenticationPrincipal Jwt jwt) {
+        if (jwt == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        
+        String newStatus = payload.get("newStatus");
+        boolean isAdmin = false;
+        try {
+            java.util.Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+            if (realmAccess != null && realmAccess.get("roles") != null) {
+                java.util.List<String> roles = (java.util.List<String>) realmAccess.get("roles");
+                isAdmin = roles.contains("ADMIN");
+            }
+        } catch (Exception e) { /* Falla segura */ }
+
+        try {
+            return ResponseEntity.ok(reservationService.updateReservationStatus(id, newStatus, getUserIdFromJwt(jwt), isAdmin));
+        } catch(RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
 }

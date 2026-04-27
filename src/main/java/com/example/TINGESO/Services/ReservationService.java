@@ -201,11 +201,64 @@ public class ReservationService {
         return dtoList;
     }
 
+    // Get All Reservations (For Admin)
+    public List<ReservationResponseDTO> getAllReservations() {
+        List<ReservationEntity> list = reservationRepository.findAll();
+        List<ReservationResponseDTO> dtoList = new ArrayList<>();
+        for (ReservationEntity r : list) {
+            dtoList.add(mapToResponseDTO(r));
+        }
+        return dtoList;
+    }
+
+    // Update Reservation Status (Admin or Client confirming)
+    @Transactional
+    public ReservationResponseDTO updateReservationStatus(Long id, String newStatus, String keycloakUserId, boolean isAdmin) {
+        ReservationEntity res = reservationRepository.findById(id).orElseThrow(() -> new RuntimeException("Reserva no encontrada"));
+        
+        ReservationStatusEnum statusEnum;
+        try {
+            statusEnum = ReservationStatusEnum.valueOf(newStatus);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Estado inválido");
+        }
+
+        if (res.getStatus() == ReservationStatusEnum.CANCELADA && !isAdmin) {
+            throw new RuntimeException("La reserva ya está CANCELADA y no puede ser modificada por el cliente");
+        }
+
+        if (!isAdmin) {
+            if (!res.getKeycloakUserId().equals(keycloakUserId)) {
+                throw new RuntimeException("No tienes permiso sobre esta reserva");
+            }
+            if (statusEnum == ReservationStatusEnum.CONFIRMADA && res.getStatus() != ReservationStatusEnum.PAGADA) {
+                throw new RuntimeException("Solo puedes CONFIRMAR una reserva que ya se encuentra PAGADA");
+            }
+        } else {
+            // Si el ADMIN cancela forzadamente una reserva que no estaba cancelada, reintegramos cupos
+            if (statusEnum == ReservationStatusEnum.CANCELADA && res.getStatus() != ReservationStatusEnum.CANCELADA) {
+                TourPackageEntity tourPackage = res.getTourPackage();
+                tourPackage.setAvailableSlots(tourPackage.getAvailableSlots() + res.getPassengersCount());
+                if (tourPackage.getStatus() == PackageStatusEnum.AGOTADO && tourPackage.getAvailableSlots() > 0) {
+                    tourPackage.setStatus(PackageStatusEnum.DISPONIBLE);
+                }
+                tourPackageRepository.save(tourPackage);
+            }
+        }
+
+        res.setStatus(statusEnum);
+        return mapToResponseDTO(reservationRepository.save(res));
+    }
+
     private ReservationResponseDTO mapToResponseDTO(ReservationEntity r) {
         ReservationResponseDTO dto = new ReservationResponseDTO();
         dto.setId(r.getId());
         dto.setPackageId(r.getTourPackage().getId());
         dto.setPackageName(r.getTourPackage().getName());
+        dto.setDestination(r.getTourPackage().getDestination());
+        dto.setStartDate(r.getTourPackage().getStartDate());
+        dto.setEndDate(r.getTourPackage().getEndDate());
+        dto.setKeycloakUserId(r.getKeycloakUserId());
         dto.setPassengersCount(r.getPassengersCount());
         dto.setTotalAmount(r.getTotalAmount());
         dto.setFinalAmount(r.getFinalAmount());
