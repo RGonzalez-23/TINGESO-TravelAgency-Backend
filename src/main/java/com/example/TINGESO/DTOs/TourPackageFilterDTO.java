@@ -9,7 +9,7 @@ import jakarta.persistence.criteria.Predicate;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,10 +21,10 @@ public class TourPackageFilterDTO {
     private Double maxPrice;
     
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    private LocalDate dateFrom;
+    private LocalDateTime dateFrom;
     
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    private LocalDate dateTo;
+    private LocalDateTime dateTo;
     
     private CategoryEnum category;
     private TripTypeEnum tripType;
@@ -38,7 +38,7 @@ public class TourPackageFilterDTO {
 
             // 1. Reglas estrictas de Negocio de Épica 3:
             predicates.add(criteriaBuilder.equal(root.get("isVisible"), true));
-            predicates.add(criteriaBuilder.greaterThan(root.get("startDate"), LocalDate.now()));
+            predicates.add(criteriaBuilder.greaterThan(root.get("startDate"), LocalDateTime.now()));
             predicates.add(criteriaBuilder.notEqual(root.get("status"), PackageStatusEnum.CANCELADO));
             predicates.add(criteriaBuilder.notEqual(root.get("status"), PackageStatusEnum.NO_VIGENTE));
 

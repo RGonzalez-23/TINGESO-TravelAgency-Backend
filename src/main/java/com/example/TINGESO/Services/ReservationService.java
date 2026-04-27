@@ -64,7 +64,7 @@ public class ReservationService {
         Double baseTotal = tourPackage.getPrice() * req.getPassengersCount();
         DiscountContextDTO discountCtx = discountEngineService.calculateDiscounts(keycloakUserId, req.getPassengersCount());
         
-        Double discountAmount = baseTotal * (discountCtx.getFinalDiscountPercentage() / 100.0);
+        Double discountAmount = Math.floor(baseTotal * (discountCtx.getFinalDiscountPercentage() / 100.0));
         Double finalAmount = baseTotal - discountAmount;
         
         if (finalAmount < 0) {
@@ -266,6 +266,7 @@ public class ReservationService {
         dto.setAppliedDiscountsDetails(r.getAppliedDiscountsDetails());
         dto.setStatus(r.getStatus());
         dto.setCreatedAt(r.getCreatedAt());
+        dto.setPaidAt(r.getPaidAt());
         
         List<PassengerDTO> plist = new ArrayList<>();
         if (r.getPassengers() != null) {

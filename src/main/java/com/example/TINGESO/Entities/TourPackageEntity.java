@@ -2,7 +2,7 @@ package com.example.TINGESO.Entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 @Entity
@@ -23,10 +23,10 @@ public class TourPackageEntity {
     private String description;
 
     @Column(nullable = false)
-    private LocalDate startDate;
+    private LocalDateTime startDate;
 
     @Column(nullable = false)
-    private LocalDate endDate;
+    private LocalDateTime endDate;
 
     @Column(nullable = false)
     private Integer durationDays;

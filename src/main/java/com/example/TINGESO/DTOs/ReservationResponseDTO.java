@@ -3,7 +3,6 @@ package com.example.TINGESO.DTOs;
 import com.example.TINGESO.Entities.ReservationStatusEnum;
 import lombok.Data;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -13,8 +12,8 @@ public class ReservationResponseDTO {
     private Long packageId;
     private String packageName;
     private String destination;
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
     private String keycloakUserId;
     private Integer passengersCount;
     private Double totalAmount;
@@ -23,5 +22,6 @@ public class ReservationResponseDTO {
     private String appliedDiscountsDetails;
     private ReservationStatusEnum status;
     private LocalDateTime createdAt;
+    private LocalDateTime paidAt;
     private List<PassengerDTO> passengers;
 }

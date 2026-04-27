@@ -2,7 +2,7 @@ package com.example.TINGESO.DTOs;
 
 import com.example.TINGESO.Entities.*;
 import lombok.Data;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 @Data
@@ -10,8 +10,8 @@ public class TourPackageRequest {
     private String name;
     private String destination;
     private String description;
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
     private Double price;
     private Integer totalSlots;
     private Set<ServiceIncludedEnum> includedServices;
