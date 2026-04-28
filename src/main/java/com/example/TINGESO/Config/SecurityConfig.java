@@ -26,8 +26,8 @@ import java.util.Map;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Value("${app.frontend-origin:http://localhost:5173}")
-    private String frontendOrigin;
+    @Value("${app.frontend-origins}")
+    private List<String> frontendOrigins;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -52,7 +52,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(frontendOrigin));
+        configuration.setAllowedOrigins(frontendOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
