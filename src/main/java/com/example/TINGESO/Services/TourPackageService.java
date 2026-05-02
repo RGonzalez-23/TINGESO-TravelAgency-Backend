@@ -5,6 +5,7 @@ import com.example.TINGESO.Entities.PackageStatusEnum;
 import com.example.TINGESO.Entities.TourPackageEntity;
 import com.example.TINGESO.Repositories.TourPackageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.temporal.ChronoUnit;
@@ -72,6 +73,10 @@ public class TourPackageService {
         }
 
         return tourPackageRepository.save(entity);
+    }
+
+    public void deletePackage(Long id) {
+        tourPackageRepository.deleteById(id);
     }
 
     private void validateBusinessRules(TourPackageRequest req) {

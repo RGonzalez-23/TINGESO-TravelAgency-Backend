@@ -250,6 +250,10 @@ public class ReservationService {
         return mapToResponseDTO(reservationRepository.save(res));
     }
 
+    private void deleteReservation(ReservationEntity res) {
+        reservationRepository.delete(res);
+    }
+
     private ReservationResponseDTO mapToResponseDTO(ReservationEntity r) {
         ReservationResponseDTO dto = new ReservationResponseDTO();
         dto.setId(r.getId());

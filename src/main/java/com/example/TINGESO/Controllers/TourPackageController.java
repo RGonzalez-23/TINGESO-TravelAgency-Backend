@@ -60,4 +60,10 @@ public class TourPackageController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        tourPackageService.deletePackage(id);
+        return ResponseEntity.ok().build();
+    }
 }
