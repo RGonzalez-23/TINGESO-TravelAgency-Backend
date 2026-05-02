@@ -20,6 +20,6 @@ public class TourPackageRequest {
     private TripTypeEnum tripType;
     private SeasonEnum season;
     private CategoryEnum category;
-    private PackageStatusEnum status; // Opcional (por defecto es DISPONIBLE)
-    private Boolean isVisible; // Opcional (por defecto true)
+    private PackageStatusEnum status; // Optional (default is DISPONIBLE)
+    private Boolean isVisible; // Optional (default true)
 }

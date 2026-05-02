@@ -21,7 +21,7 @@ public class TourPackageService {
         return tourPackageRepository.findAll();
     }
 
-    // Nuevo método para Épica 3: Búsqueda dinámica usando un DTO
+    // New method for Epic 3: Dynamic search using a DTO
     public List<TourPackageEntity> searchPackages(com.example.TINGESO.DTOs.TourPackageFilterDTO filterDTO) {
         return tourPackageRepository.findAll(filterDTO.toSpecification());
     }
@@ -37,7 +37,7 @@ public class TourPackageService {
         TourPackageEntity entity = new TourPackageEntity();
         mapDtoToEntity(req, entity);
         
-        // Valores por defecto al momento de Crear (Basado en el requerimiento)
+        // Default values at creation time (Based on the requirement)
         entity.setAvailableSlots(req.getTotalSlots());
         entity.setStatus(req.getStatus() != null ? req.getStatus() : PackageStatusEnum.DISPONIBLE);
         entity.setIsVisible(req.getIsVisible() != null ? req.getIsVisible() : true);
@@ -50,7 +50,7 @@ public class TourPackageService {
                 
         validateBusinessRules(req);
         
-        // [Regla de Negocio Épica 2]: "Al modificar, NO debe afectar reservas realizadas (cupos totales menores al número ya reservado)"
+        // [Epic 2 Business Rule]: "When modifying, it MUST NOT affect made reservations (total slots less than the number already reserved)"
         int occupiedSlots = entity.getTotalSlots() - entity.getAvailableSlots();
         if (req.getTotalSlots() < occupiedSlots) {
             throw new RuntimeException("Error: Los nuevos cupos totales (" + req.getTotalSlots() + ") no pueden ser menores a las reservas ya pagadas/realizadas (" + occupiedSlots + ").");
@@ -58,10 +58,10 @@ public class TourPackageService {
         
         mapDtoToEntity(req, entity);
         
-        // Recalcular cupos disponibles automáticamente
+        // Recalculate available slots automatically
         entity.setAvailableSlots(req.getTotalSlots() - occupiedSlots);
         
-        // [Regla de Negocio Épica 2]: "Si la disponibilidad es 0, NO se puede marcar como disponible"
+        // [Epic 2 Business Rule]: "If availability is 0, it CANNOT be marked as available"
         PackageStatusEnum newStatus = req.getStatus() != null ? req.getStatus() : entity.getStatus();
         if (entity.getAvailableSlots() == 0 && newStatus == PackageStatusEnum.DISPONIBLE) {
             throw new RuntimeException("Error: Como los cupos disponibles son 0, el paquete NO se puede forzar al estado DISPONIBLE.");
@@ -83,15 +83,15 @@ public class TourPackageService {
         if (req.getStartDate() == null || req.getEndDate() == null) {
             throw new RuntimeException("Las fechas de inicio y término son obligatorias");
         }
-        // [Regla de Negocio Épica 2]: "Fecha termino SI O SI posterior a fecha de inicio"
+        // [Epic 2 Business Rule]: "End date MUST BE strictly after start date"
         if (!req.getEndDate().isAfter(req.getStartDate())) {
             throw new RuntimeException("Error: La fecha de término DEBE ser estrictamente posterior a la fecha de inicio");
         }
-        // [Regla de Negocio Épica 2]: "Precio estrictamente mayor a 0"
+        // [Epic 2 Business Rule]: "Price strictly greater than 0"
         if (req.getPrice() == null || req.getPrice() <= 0) {
             throw new RuntimeException("Error: El precio base debe ser mayor a 0 CLP");
         }
-        // [Regla de Negocio Épica 2]: "Cupos totales estrictamente mayor a 0"
+        // [Epic 2 Business Rule]: "Total slots strictly greater than 0"
         if (req.getTotalSlots() == null || req.getTotalSlots() <= 0) {
             throw new RuntimeException("Error: Los cupos totales iniciales deben ser mayores a 0");
         }
@@ -104,7 +104,7 @@ public class TourPackageService {
         entity.setStartDate(req.getStartDate());
         entity.setEndDate(req.getEndDate());
         
-        // Calculo automático de duración en días
+        // Automatic calculation of duration in days
         long days = ChronoUnit.DAYS.between(req.getStartDate(), req.getEndDate());
         entity.setDurationDays((int) days);
 

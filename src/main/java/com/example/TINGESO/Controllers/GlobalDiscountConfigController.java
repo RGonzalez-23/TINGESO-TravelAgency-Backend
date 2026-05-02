@@ -22,7 +22,7 @@ public class GlobalDiscountConfigController {
 
     @PutMapping
     public ResponseEntity<?> updateConfig(@RequestBody GlobalDiscountConfigEntity updatedConfig) {
-        updatedConfig.setId(1L); // Forzar que sea el ID 1 para que sobreescriba la tabla global
+        updatedConfig.setId(1L); // Force it to be ID 1 so it overwrites the global table
         return ResponseEntity.ok(configRepository.save(updatedConfig));
     }
 }

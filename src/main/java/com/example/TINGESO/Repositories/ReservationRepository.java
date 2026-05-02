@@ -12,9 +12,9 @@ import java.util.List;
 public interface ReservationRepository extends JpaRepository<ReservationEntity, Long> {
     List<ReservationEntity> findByKeycloakUserId(String keycloakUserId);
     
-    // Para validar multipaquete o cliente frecuente (ver estado de las reservas de un cliente)
+    // To validate multi-package or frequent client (see status of a client's reservations)
     List<ReservationEntity> findByKeycloakUserIdAndStatus(String keycloakUserId, ReservationStatusEnum status);
     
-    // Para buscar reservas de multipaquete en una ventana de tiempo específica
+    // To search for multi-package reservations in a specific time window
     List<ReservationEntity> findByKeycloakUserIdAndStatusAndPaidAtAfter(String keycloakUserId, ReservationStatusEnum status, LocalDateTime afterDate);
 }

@@ -38,9 +38,9 @@ public class ReservationService {
     private DiscountEngineService discountEngineService;
 
     @Autowired
-    private TaskScheduler taskScheduler; // Inyectamos el planificador de Spring Boot para timeout
+    private TaskScheduler taskScheduler; // We inject the Spring Boot task scheduler for timeout
 
-    // Crear la reserva (Retorna DTO de respuesta para el frontend)
+    // Create the reservation (Returns response DTO for the frontend)
     @Transactional
     public ReservationResponseDTO createReservation(ReservationRequestDTO req, String keycloakUserId) {
         if (req.getPassengersCount() == null || req.getPassengersCount() <= 0) {
@@ -60,7 +60,7 @@ public class ReservationService {
             throw new RuntimeException("No hay cupos suficientes. Cupos disponibles: " + tourPackage.getAvailableSlots());
         }
 
-        // Calcular montos y descuentos
+        // Calculate amounts and discounts
         Double baseTotal = tourPackage.getPrice() * req.getPassengersCount();
         DiscountContextDTO discountCtx = discountEngineService.calculateDiscounts(keycloakUserId, req.getPassengersCount());
         
@@ -71,14 +71,14 @@ public class ReservationService {
             finalAmount = 0.0;
         }
 
-        // Descontar cupos del paquete
+        // Deduct slots from the package
         tourPackage.setAvailableSlots(tourPackage.getAvailableSlots() - req.getPassengersCount());
         if (tourPackage.getAvailableSlots() == 0) {
             tourPackage.setStatus(PackageStatusEnum.AGOTADO);
         }
         tourPackageRepository.save(tourPackage);
 
-        // Crear Entidad Reserva
+        // Create Reservation Entity
         ReservationEntity res = new ReservationEntity();
         res.setKeycloakUserId(keycloakUserId);
         res.setTourPackage(tourPackage);
@@ -91,7 +91,7 @@ public class ReservationService {
         res.setSpecialRequests(req.getSpecialRequests());
         res.setPreferences(req.getPreferences());
 
-        // Mapear pasajeros
+        // Map passengers
         if (req.getPassengers() != null) {
             for (PassengerDTO pdto : req.getPassengers()) {
                 PassengerEntity pass = new PassengerEntity();
@@ -106,25 +106,25 @@ public class ReservationService {
 
         ReservationEntity savedRes = reservationRepository.save(res);
 
-        // Programar la Tarea de Auto-Expiración en 3 minutos exactos (180000 ms)
+        // Schedule Auto-Expiration Task in exactly 3 minutes (180000 ms)
         Instant expirationTime = Instant.now().plusMillis(180000);
         taskScheduler.schedule(() -> cancelReservationIfPending(savedRes.getId()), expirationTime);
 
         return mapToResponseDTO(savedRes);
     }
 
-    // Tarea Programada que se ejecutará 3 minutos en el futuro
+    // Scheduled Task to execute 3 minutes in the future
     @Transactional
     public void cancelReservationIfPending(Long reservationId) {
         ReservationEntity res = reservationRepository.findById(reservationId).orElse(null);
         if (res != null && res.getStatus() == ReservationStatusEnum.PENDIENTE) {
             res.setStatus(ReservationStatusEnum.CANCELADA);
             
-            // Restituir cupos a la agencia
+            // Restore slots to the agency
             TourPackageEntity tourPackage = res.getTourPackage();
             tourPackage.setAvailableSlots(tourPackage.getAvailableSlots() + res.getPassengersCount());
             
-            // Si la agencia había quedado Agotada por esta reserva, vuelve a estar Disponible
+            // If the agency had become Sold Out due to this reservation, it becomes Available again
             if (tourPackage.getStatus() == PackageStatusEnum.AGOTADO && tourPackage.getAvailableSlots() > 0) {
                 tourPackage.setStatus(PackageStatusEnum.DISPONIBLE);
             }
@@ -191,7 +191,7 @@ public class ReservationService {
         return receipt;
     }
     
-    // Obtener mis Reservas
+    // Get my Reservations
     public List<ReservationResponseDTO> getMyReservations(String keycloakUserId) {
         List<ReservationEntity> list = reservationRepository.findByKeycloakUserId(keycloakUserId);
         List<ReservationResponseDTO> dtoList = new ArrayList<>();
@@ -235,7 +235,7 @@ public class ReservationService {
                 throw new RuntimeException("Solo puedes CONFIRMAR una reserva que ya se encuentra PAGADA");
             }
         } else {
-            // Si el ADMIN cancela forzadamente una reserva que no estaba cancelada, reintegramos cupos
+            // If the ADMIN force cancels a reservation that wasn't cancelled, we restore slots
             if (statusEnum == ReservationStatusEnum.CANCELADA && res.getStatus() != ReservationStatusEnum.CANCELADA) {
                 TourPackageEntity tourPackage = res.getTourPackage();
                 tourPackage.setAvailableSlots(tourPackage.getAvailableSlots() + res.getPassengersCount());

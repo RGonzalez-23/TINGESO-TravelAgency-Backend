@@ -9,6 +9,6 @@ import java.util.List;
 
 @Repository
 public interface PromotionRepository extends JpaRepository<PromotionEntity, Long> {
-    // Buscar promociones activas actuales
+    // Find current active promotions
     List<PromotionEntity> findByIsActiveTrueAndStartDateBeforeAndEndDateAfter(LocalDateTime now1, LocalDateTime now2);
 }

@@ -35,19 +35,19 @@ public class DiscountEngineService {
     }
 
     public DiscountContextDTO calculateDiscounts(String keycloakUserId, int passengersCount) {
-        // En caso de que no haya configuración cargada en DB, instanciamos la default en memoria temporalmente
+        // In case there is no configuration loaded in DB, we instantiate the default in memory temporarily
         GlobalDiscountConfigEntity config = configRepository.findById(1L).orElseGet(GlobalDiscountConfigEntity::new);
         
         List<String> discountReasons = new ArrayList<>();
         List<Double> applicableDiscounts = new ArrayList<>();
 
-        // 1. Descuento Grupal
+        // 1. Group Discount
         if (passengersCount >= config.getGroupMinPassengers()) {
             applicableDiscounts.add(config.getGroupDiscountPercentage());
             discountReasons.add("Descuento Grupal (" + config.getGroupDiscountPercentage() + "%)");
         }
 
-        // 2. Cliente Frecuente (Reservas pagadas previas)
+        // 2. Frequent Client (Previous paid reservations)
         int paidReservations = reservationRepository.findByKeycloakUserIdAndStatus(keycloakUserId, ReservationStatusEnum.PAGADA).size();
         int confirmedReservations = reservationRepository.findByKeycloakUserIdAndStatus(keycloakUserId, ReservationStatusEnum.CONFIRMADA).size();
         if (paidReservations + confirmedReservations >= config.getFrequentClientMinReservations()) {
@@ -55,7 +55,7 @@ public class DiscountEngineService {
             discountReasons.add("Cliente Frecuente (" + config.getFrequentClientDiscountPercentage() + "%)");
         }
 
-        // 3. Múltiples Paquetes (Reservas pagadas recientemente dentro de una ventana de tiempo)
+        // 3. Multiple Packages (Recently paid reservations within a time window)
         LocalDateTime windowStart = LocalDateTime.now().minusDays(config.getMultiPackageDaysWindow());
         int recentPaidReservations = reservationRepository.findByKeycloakUserIdAndStatusAndPaidAtAfter(
                 keycloakUserId, ReservationStatusEnum.PAGADA, windowStart).size();
@@ -65,7 +65,7 @@ public class DiscountEngineService {
             discountReasons.add("Compra Múltiple Reciente (" + config.getMultiPackageDiscountPercentage() + "%)");
         }
 
-        // 4. Promociones Temporales Activas (Ej. Black Friday)
+        // 4. Active Temporary Promotions (e.g., Black Friday)
         List<PromotionEntity> activePromotions = promotionRepository.findByIsActiveTrueAndStartDateBeforeAndEndDateAfter(
                 LocalDateTime.now(), LocalDateTime.now());
         
@@ -74,24 +74,24 @@ public class DiscountEngineService {
             discountReasons.add("Promo: " + promo.getName() + " (" + promo.getDiscountPercentage() + "%)");
         }
 
-        // Calcular % Total de descuento a aplicar
+        // Calculate Total % discount to apply
         double finalPercentage = 0.0;
         
         if (!applicableDiscounts.isEmpty()) {
             if (config.getAreDiscountsAccumulative()) {
-                // Sumar todos los descuentos directamente
+                // Sum all discounts directly
                 finalPercentage = applicableDiscounts.stream().mapToDouble(Double::doubleValue).sum();
             } else {
-                // Regla Excluyente: Seleccionar solo la oferta con el MAYOR descuento
+                // Exclusive Rule: Select only the offer with the HIGHEST discount
                 double max = applicableDiscounts.stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
                 finalPercentage = max;
-                // Sobrescribimos las razones para indicar que solo se aplicó el mayor
+                // We overwrite the reasons to indicate that only the highest was applied
                 discountReasons.clear();
                 discountReasons.add("Descuento Base Excluyente (" + max + "%)");
             }
         }
 
-        // Aplicar límite global (Cap máximo permitido de descuentos)
+        // Apply global limit (Maximum allowed discount cap)
         if (finalPercentage > config.getMaxGlobalDiscountPercentageCap()) {
             finalPercentage = config.getMaxGlobalDiscountPercentageCap();
             discountReasons.add("[Límite Máximo del " + config.getMaxGlobalDiscountPercentageCap() + "% Alcanzado]");

@@ -47,11 +47,11 @@ public class ReservationControllerTest {
         java.util.Map<String, String> payload = new java.util.HashMap<>();
         payload.put("newStatus", "CANCELADA");
 
-        mockMvc.perform(put("/api/reservations/1/status") // Endpoint real: /{id}/status
+        mockMvc.perform(put("/api/reservations/1/status") // Real endpoint: /{id}/status
                         .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                         .content(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(payload))
                         .with(jwt().jwt(builder -> builder
-                                .subject("user123") // Este será el userId que el service recibirá
+                                .subject("user123") // This will be the userId that the service will receive
                                 .claim("realm_access", java.util.Map.of("roles", java.util.List.of("CLIENTE"))))))
                 .andExpect(status().isOk());
     }

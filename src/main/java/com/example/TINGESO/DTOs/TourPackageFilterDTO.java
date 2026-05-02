@@ -31,18 +31,18 @@ public class TourPackageFilterDTO {
     private Integer minDuration;
     private Integer maxDuration;
 
-    // Centralizamos la lógica de construcción de Specification dentro del DTO
+    // We centralize the Specification construction logic inside the DTO
     public Specification<TourPackageEntity> toSpecification() {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // 1. Reglas estrictas de Negocio de Épica 3:
+            // 1. Strict Business Rules of Epic 3:
             predicates.add(criteriaBuilder.equal(root.get("isVisible"), true));
             predicates.add(criteriaBuilder.greaterThan(root.get("startDate"), LocalDateTime.now()));
             predicates.add(criteriaBuilder.notEqual(root.get("status"), PackageStatusEnum.CANCELADO));
             predicates.add(criteriaBuilder.notEqual(root.get("status"), PackageStatusEnum.NO_VIGENTE));
 
-            // 2. Filtros dinámicos
+            // 2. Dynamic filters
             if (destination != null && !destination.trim().isEmpty()) {
                 predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("destination")), "%" + destination.toLowerCase() + "%"));
             }

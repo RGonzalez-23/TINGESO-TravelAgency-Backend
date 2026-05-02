@@ -18,12 +18,12 @@ public class ReservationController {
     @Autowired
     private ReservationService reservationService;
 
-    // Extraemos el UUID real del usuario desde los tokens de Keycloak inyectados por Spring Security
+    // We extract the real UUID of the user from the Keycloak tokens injected by Spring Security
     private String getUserIdFromJwt(Jwt jwt) {
         return jwt.getClaimAsString("sub"); 
     }
 
-    // Crear una reserva (Solo usuarios logueados automáticamente inyecta el DTO y el JWT)
+    // Create a reservation (Only logged-in users automatically inject the DTO and JWT)
     @PostMapping
     public ResponseEntity<?> createReservation(
             @RequestBody ReservationRequestDTO request,
@@ -41,7 +41,7 @@ public class ReservationController {
         }
     }
 
-    // Pagar una reserva PENDIENTE
+    // Pay a PENDING reservation
     @PostMapping("/{id}/pay")
     public ResponseEntity<?> payReservation(
             @PathVariable Long id,
@@ -55,21 +55,21 @@ public class ReservationController {
         }
     }
 
-    // Obtener reservas de mi propio usuario
+    // Get reservations of my own user
     @GetMapping("/me")
     public ResponseEntity<?> getMyReservations(@AuthenticationPrincipal Jwt jwt) {
         if (jwt == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         return ResponseEntity.ok(reservationService.getMyReservations(getUserIdFromJwt(jwt)));
     }
 
-    // [ADMIN] Obtener TODAS las reservas del sistema
+    // [ADMIN] Get ALL system reservations
     @GetMapping("/all")
     public ResponseEntity<?> getAllReservations(@AuthenticationPrincipal Jwt jwt) {
         if (jwt == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         return ResponseEntity.ok(reservationService.getAllReservations());
     }
 
-    // Cambiar estado de la reserva (Cliente confirmando o Admin gestionando)
+    // Change reservation status (Client confirming or Admin managing)
     @PutMapping("/{id}/status")
     public ResponseEntity<?> updateReservationStatus(
             @PathVariable Long id, 
@@ -85,7 +85,7 @@ public class ReservationController {
                 java.util.List<String> roles = (java.util.List<String>) realmAccess.get("roles");
                 isAdmin = roles.contains("ADMIN");
             }
-        } catch (Exception e) { /* Falla segura */ }
+        } catch (Exception e) { /* Fail safe */ }
 
         try {
             return ResponseEntity.ok(reservationService.updateReservationStatus(id, newStatus, getUserIdFromJwt(jwt), isAdmin));

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/packages")
-@CrossOrigin(origins = "*") // Habilitar peticiones desde React (Vite 5173)
+@CrossOrigin(origins = "*") // Enable requests from React (Vite 5173)
 public class TourPackageController {
 
     @Autowired
@@ -21,7 +21,7 @@ public class TourPackageController {
         return ResponseEntity.ok(tourPackageService.getAllPackages());
     }
 
-    // ⭐ ENDPOINT ÉPICA 3: Búsqueda y filtrado para clientes refactorizado
+    // ⭐ EPIC 3 ENDPOINT: Refactored search and filtering for clients
     @GetMapping("/search")
     public ResponseEntity<?> searchPackages(@ModelAttribute com.example.TINGESO.DTOs.TourPackageFilterDTO filterDTO) {
         try {
@@ -46,7 +46,7 @@ public class TourPackageController {
             TourPackageEntity newPackage = tourPackageService.createPackage(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(newPackage);
         } catch (RuntimeException e) {
-            // Devuelve error 400 Bad Request cuando caen las reglas de negocio
+            // Returns 400 Bad Request error when business rules fail
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
