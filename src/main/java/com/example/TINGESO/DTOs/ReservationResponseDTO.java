@@ -23,5 +23,6 @@ public class ReservationResponseDTO {
     private ReservationStatusEnum status;
     private LocalDateTime createdAt;
     private LocalDateTime paidAt;
+    private String paymentMethod;
     private List<PassengerDTO> passengers;
 }

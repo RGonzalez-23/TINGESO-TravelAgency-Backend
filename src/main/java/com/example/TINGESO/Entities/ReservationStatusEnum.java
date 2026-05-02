@@ -1,5 +1,5 @@
 package com.example.TINGESO.Entities;
 
 public enum ReservationStatusEnum {
-    PENDIENTE, PAGADA, CONFIRMADA, CANCELADA
+    PENDIENTE, EXPIRADA, PAGADA, CONFIRMADA, CANCELADA
 }

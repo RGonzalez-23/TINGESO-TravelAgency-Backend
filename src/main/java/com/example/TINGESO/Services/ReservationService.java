@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -108,17 +107,17 @@ public class ReservationService {
 
         // Schedule Auto-Expiration Task in exactly 3 minutes (180000 ms)
         Instant expirationTime = Instant.now().plusMillis(180000);
-        taskScheduler.schedule(() -> cancelReservationIfPending(savedRes.getId()), expirationTime);
+        taskScheduler.schedule(() -> expireReservationIfPending(savedRes.getId()), expirationTime);
 
         return mapToResponseDTO(savedRes);
     }
 
     // Scheduled Task to execute 3 minutes in the future
     @Transactional
-    public void cancelReservationIfPending(Long reservationId) {
+    public void expireReservationIfPending(Long reservationId) {
         ReservationEntity res = reservationRepository.findById(reservationId).orElse(null);
         if (res != null && res.getStatus() == ReservationStatusEnum.PENDIENTE) {
-            res.setStatus(ReservationStatusEnum.CANCELADA);
+            res.setStatus(ReservationStatusEnum.EXPIRADA);
             
             // Restore slots to the agency
             TourPackageEntity tourPackage = res.getTourPackage();
@@ -131,7 +130,7 @@ public class ReservationService {
             
             tourPackageRepository.save(tourPackage);
             reservationRepository.save(res);
-            System.out.println("LOG: Reserva " + reservationId + " expiro por Timeout (1 minuto sin pagar). Cupos restaurados.");
+            System.out.println("LOG: Reserva " + reservationId + " expiró por Timeout (3 minutos sin pagar). Cupos restaurados.");
         }
     }
 
@@ -223,8 +222,8 @@ public class ReservationService {
             throw new RuntimeException("Estado inválido");
         }
 
-        if (res.getStatus() == ReservationStatusEnum.CANCELADA && !isAdmin) {
-            throw new RuntimeException("La reserva ya está CANCELADA y no puede ser modificada por el cliente");
+        if ((res.getStatus() == ReservationStatusEnum.CANCELADA || res.getStatus() == ReservationStatusEnum.EXPIRADA) && !isAdmin) {
+            throw new RuntimeException("La reserva ya está " + res.getStatus() + " y no puede ser modificada por el cliente");
         }
 
         if (!isAdmin) {
@@ -234,16 +233,19 @@ public class ReservationService {
             if (statusEnum == ReservationStatusEnum.CONFIRMADA && res.getStatus() != ReservationStatusEnum.PAGADA) {
                 throw new RuntimeException("Solo puedes CONFIRMAR una reserva que ya se encuentra PAGADA");
             }
-        } else {
-            // If the ADMIN force cancels a reservation that wasn't cancelled, we restore slots
-            if (statusEnum == ReservationStatusEnum.CANCELADA && res.getStatus() != ReservationStatusEnum.CANCELADA) {
-                TourPackageEntity tourPackage = res.getTourPackage();
-                tourPackage.setAvailableSlots(tourPackage.getAvailableSlots() + res.getPassengersCount());
-                if (tourPackage.getStatus() == PackageStatusEnum.AGOTADO && tourPackage.getAvailableSlots() > 0) {
-                    tourPackage.setStatus(PackageStatusEnum.DISPONIBLE);
-                }
-                tourPackageRepository.save(tourPackage);
+            if (statusEnum != ReservationStatusEnum.CONFIRMADA && statusEnum != ReservationStatusEnum.CANCELADA) {
+                throw new RuntimeException("El cliente solo puede CONFIRMAR o CANCELAR su reserva");
             }
+        }
+
+        // Si se cancela una reserva que estaba previamente cancelada ni expirada, reintegramos cupos al paquete
+        if (statusEnum == ReservationStatusEnum.CANCELADA && res.getStatus() != ReservationStatusEnum.CANCELADA && res.getStatus() != ReservationStatusEnum.EXPIRADA) {
+            TourPackageEntity tourPackage = res.getTourPackage();
+            tourPackage.setAvailableSlots(tourPackage.getAvailableSlots() + res.getPassengersCount());
+            if (tourPackage.getStatus() == PackageStatusEnum.AGOTADO && tourPackage.getAvailableSlots() > 0) {
+                tourPackage.setStatus(PackageStatusEnum.DISPONIBLE);
+            }
+            tourPackageRepository.save(tourPackage);
         }
 
         res.setStatus(statusEnum);
@@ -271,6 +273,8 @@ public class ReservationService {
         dto.setStatus(r.getStatus());
         dto.setCreatedAt(r.getCreatedAt());
         dto.setPaidAt(r.getPaidAt());
+        // Attach payment method when a transaction exists for this reservation
+        paymentRepository.findByReservationId(r.getId()).ifPresent(tx -> dto.setPaymentMethod(tx.getPaymentMethod()));
         
         List<PassengerDTO> plist = new ArrayList<>();
         if (r.getPassengers() != null) {

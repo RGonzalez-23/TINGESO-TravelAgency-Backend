@@ -37,7 +37,7 @@ public class ReservationEntity {
     private String appliedDiscountsDetails; // Razones de los descuentos aplicados ej: "10% Grupo, 5% MultiPaquete"
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(50)")
     private ReservationStatusEnum status;
 
     @Column(length = 1000)

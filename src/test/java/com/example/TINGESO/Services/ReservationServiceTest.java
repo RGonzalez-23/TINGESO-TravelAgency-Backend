@@ -107,9 +107,9 @@ class ReservationServiceTest {
 
         when(reservationRepository.findById(1L)).thenReturn(Optional.of(res));
 
-        reservationService.cancelReservationIfPending(1L);
+        reservationService.expireReservationIfPending(1L);
 
-        assertThat(res.getStatus()).isEqualTo(ReservationStatusEnum.CANCELADA);
+        assertThat(res.getStatus()).isEqualTo(ReservationStatusEnum.EXPIRADA);
         assertThat(pkg.getAvailableSlots()).isEqualTo(2);
         assertThat(pkg.getStatus()).isEqualTo(PackageStatusEnum.DISPONIBLE);
         verify(reservationRepository).save(res);
