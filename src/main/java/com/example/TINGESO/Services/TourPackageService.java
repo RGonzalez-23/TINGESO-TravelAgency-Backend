@@ -8,6 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -124,5 +128,21 @@ public class TourPackageService {
         entity.setTripType(req.getTripType());
         entity.setSeason(req.getSeason());
         entity.setCategory(req.getCategory());
+    }
+
+    // Tarea programada que se ejecuta cada minuto (60000 ms)
+    @Scheduled(fixedRate = 60000)
+    @Transactional
+    public void markExpiredPackagesAsNoVigente() {
+        LocalDateTime now = LocalDateTime.now();
+        List<TourPackageEntity> activePackages = tourPackageRepository.findAll();
+        for (TourPackageEntity pkg : activePackages) {
+            if ((pkg.getStatus() == PackageStatusEnum.DISPONIBLE || pkg.getStatus() == PackageStatusEnum.AGOTADO) 
+                && !pkg.getStartDate().isAfter(now)) {
+                pkg.setStatus(PackageStatusEnum.NO_VIGENTE);
+                tourPackageRepository.save(pkg);
+                System.out.println("LOG: El paquete ID " + pkg.getId() + " (" + pkg.getName() + ") ha comenzado o pasado su fecha de inicio y ahora es NO_VIGENTE automáticamente.");
+            }
+        }
     }
 }

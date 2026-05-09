@@ -206,4 +206,19 @@ class TourPackageServiceTest {
         tourPackageService.deletePackage(1L);
         verify(tourPackageRepository, times(1)).deleteById(1L);
     }
+
+    @Test
+    void markExpiredPackagesAsNoVigente_ShouldUpdateStatus() {
+        TourPackageEntity pkg = new TourPackageEntity();
+        pkg.setId(1L);
+        pkg.setStatus(PackageStatusEnum.DISPONIBLE);
+        pkg.setStartDate(LocalDateTime.now().minusMinutes(5)); // Already started
+        
+        when(tourPackageRepository.findAll()).thenReturn(Collections.singletonList(pkg));
+        
+        tourPackageService.markExpiredPackagesAsNoVigente();
+        
+        verify(tourPackageRepository, times(1)).save(pkg);
+        assertThat(pkg.getStatus()).isEqualTo(PackageStatusEnum.NO_VIGENTE);
+    }
 }
