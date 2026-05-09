@@ -105,7 +105,7 @@ public class TourPackageService {
         entity.setEndDate(req.getEndDate());
         
         // Automatic calculation of duration in days
-        long days = ChronoUnit.DAYS.between(req.getStartDate(), req.getEndDate());
+        long days = ChronoUnit.DAYS.between(req.getStartDate(), req.getEndDate()) + 1;
         entity.setDurationDays((int) days);
 
         entity.setPrice(req.getPrice());
