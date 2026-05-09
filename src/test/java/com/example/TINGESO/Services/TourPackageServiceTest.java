@@ -104,26 +104,45 @@ class TourPackageServiceTest {
 
     @Test
     void updatePackage_Success() {
+        // Define shared dates to ensure they match during the "date modification" validation
+        LocalDateTime start = LocalDateTime.now().plusDays(1);
+        LocalDateTime end = LocalDateTime.now().plusDays(5);
+
+        // Prepare the existing entity (Mocked database state)
         TourPackageEntity existing = new TourPackageEntity();
         existing.setTotalSlots(10);
-        existing.setAvailableSlots(8); // 2 occupied
+        existing.setAvailableSlots(8); // 2 slots are already occupied (10 - 8 = 2)
         existing.setStatus(PackageStatusEnum.DISPONIBLE);
-        
+
+        // CRITICAL FIX: Set the dates on the existing entity to avoid NullPointerException
+        // when the service calls .toLocalDate()
+        existing.setStartDate(start);
+        existing.setEndDate(end);
+
+        // Mock the repository to return the "existing" entity when searched by ID
         when(tourPackageRepository.findById(1L)).thenReturn(Optional.of(existing));
 
+        // Prepare the update request (DTO)
         TourPackageRequest req = new TourPackageRequest();
-        req.setStartDate(LocalDateTime.now().plusDays(1));
-        req.setEndDate(LocalDateTime.now().plusDays(5));
-        req.setTotalSlots(15);
+        req.setStartDate(start); // Must match existing date because there are active reservations
+        req.setEndDate(end);
+        req.setTotalSlots(15);    // Increasing total slots
         req.setPrice(100.0);
-        
+        req.setName("Updated Package Name");
+
+        // Prepare the entity that we expect to be saved
         TourPackageEntity saved = new TourPackageEntity();
-        saved.setAvailableSlots(13); // 15 - 2
-        
+        saved.setAvailableSlots(13); // Expected: 15 (new total) - 2 (already occupied) = 13
+
+        // Mock the save operation to return our "saved" object
         when(tourPackageRepository.save(any(TourPackageEntity.class))).thenReturn(saved);
 
+        // Execute the service method
         TourPackageEntity result = tourPackageService.updatePackage(1L, req);
+
+        // Assertions to verify correct behavior and coverage
         assertThat(result.getAvailableSlots()).isEqualTo(13);
+        verify(tourPackageRepository, times(1)).save(any(TourPackageEntity.class));
     }
 
     @Test
@@ -159,6 +178,25 @@ class TourPackageServiceTest {
         req.setPrice(100.0);
         req.setStatus(PackageStatusEnum.DISPONIBLE); // Invalid, slots are 0
 
+        assertThrows(RuntimeException.class, () -> tourPackageService.updatePackage(1L, req));
+    }
+
+    @Test
+    void updatePackage_FailsWhenModifyingDatesWithExistingReservations() {
+        TourPackageEntity existing = new TourPackageEntity();
+        existing.setTotalSlots(10);
+        existing.setAvailableSlots(8); // 2 occupied
+        existing.setStartDate(java.time.LocalDateTime.now().plusDays(1));
+        existing.setEndDate(java.time.LocalDateTime.now().plusDays(5));
+        
+        when(tourPackageRepository.findById(1L)).thenReturn(java.util.Optional.of(existing));
+
+        TourPackageRequest req = new TourPackageRequest();
+        req.setStartDate(java.time.LocalDateTime.now().plusDays(2)); // CHANGED DATE
+        req.setEndDate(java.time.LocalDateTime.now().plusDays(5));
+        req.setTotalSlots(15);
+        req.setPrice(100.0);
+        
         assertThrows(RuntimeException.class, () -> tourPackageService.updatePackage(1L, req));
     }
 

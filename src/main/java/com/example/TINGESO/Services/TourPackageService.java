@@ -56,6 +56,14 @@ public class TourPackageService {
             throw new RuntimeException("Error: Los nuevos cupos totales (" + req.getTotalSlots() + ") no pueden ser menores a las reservas ya pagadas/realizadas (" + occupiedSlots + ").");
         }
         
+        // [Epic 2 Business Rule]: "If it has reservations, base dates CANNOT be modified"
+        if (occupiedSlots > 0) {
+            if (!entity.getStartDate().toLocalDate().equals(req.getStartDate().toLocalDate()) || 
+                !entity.getEndDate().toLocalDate().equals(req.getEndDate().toLocalDate())) {
+                throw new RuntimeException("Error: No puedes modificar las fechas base de un paquete que ya cuenta con reservas activas. Crea un paquete nuevo.");
+            }
+        }
+        
         mapDtoToEntity(req, entity);
         
         // Recalculate available slots automatically
