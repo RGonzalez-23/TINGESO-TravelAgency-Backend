@@ -1,6 +1,8 @@
 package com.example.TINGESO.Entities;
 
 import jakarta.persistence.*;
+import lombok.Data;
+
 import java.time.LocalDateTime;
 
 /**
@@ -10,6 +12,7 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "payment_transactions")
+@Data
 public class PaymentTransactionEntity {
 
     @Id
@@ -34,52 +37,4 @@ public class PaymentTransactionEntity {
     @OneToOne
     @JoinColumn(name = "reservation_id", nullable = false)
     private ReservationEntity reservation;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getTransactionHash() {
-        return transactionHash;
-    }
-
-    public void setTransactionHash(String transactionHash) {
-        this.transactionHash = transactionHash;
-    }
-
-    public Double getAmountPaid() {
-        return amountPaid;
-    }
-
-    public void setAmountPaid(Double amountPaid) {
-        this.amountPaid = amountPaid;
-    }
-
-    public LocalDateTime getTransactionDate() {
-        return transactionDate;
-    }
-
-    public void setTransactionDate(LocalDateTime transactionDate) {
-        this.transactionDate = transactionDate;
-    }
-
-    public String getPaymentMethod() {
-        return paymentMethod;
-    }
-
-    public void setPaymentMethod(String paymentMethod) {
-        this.paymentMethod = paymentMethod;
-    }
-
-    public ReservationEntity getReservation() {
-        return reservation;
-    }
-
-    public void setReservation(ReservationEntity reservation) {
-        this.reservation = reservation;
-    }
 }
