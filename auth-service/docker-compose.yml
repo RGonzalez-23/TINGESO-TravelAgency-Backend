@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  auth-server:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: travel_keycloak
+    command: start-dev --import-realm
+    volumes:
+      - ./realm-export.json:/opt/keycloak/data/import/realm-export.json
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HOSTNAME_URL: http://localhost:8080
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HOSTNAME_STRICT: "false"
+    ports:
+      - "8080:8080"
+    networks:
+      - shared_travel_net
+
+networks:
+  shared_travel_net:
+    external: true
+    name: travel_network
